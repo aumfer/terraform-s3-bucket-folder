@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.StaticFiles;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
@@ -7,6 +8,24 @@ using System.Text;
 
 namespace terraform_s3_bucket_folder
 {
+    static class TerraformResource
+    {
+        public static string Quote(string s) => '"' + s + '"';
+        public static readonly string AwsS3BucketObject = Quote("aws_s3_bucket_object");
+    }
+
+    static class FileExtensionContentTypeProviderExtensions
+    {
+        public static string GetContentType(this FileExtensionContentTypeProvider fileExtensionContentTypeProvider, string fileName, string ifNone = "content/octet-stream")
+        {
+            if (!fileExtensionContentTypeProvider.TryGetContentType(fileName, out string mimeType))
+            {
+                mimeType = ifNone;
+            }
+            return mimeType;
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
@@ -22,6 +41,8 @@ namespace terraform_s3_bucket_folder
             Console.WriteLine($"readPath {readPath}");
             Console.WriteLine($"writePath {writePath}");
 
+            var mimeProvider = new FileExtensionContentTypeProvider();
+
             var files =
                 from searchFile in Directory.EnumerateFiles(readPath, "*", SearchOption.AllDirectories)
                 let filePath = Path.GetFullPath(searchFile)
@@ -33,11 +54,13 @@ namespace terraform_s3_bucket_folder
                 let hash = (uint)absPath.GetHashCode()
                 let relPath = Path.GetRelativePath(readPath, absPath)
                 let key = $"{bucketPath}{Path.DirectorySeparatorChar}{relPath}"
+                let mimeType = mimeProvider.GetContentType(fileName)
                 select new StringBuilder()
                 .AppendLine($"  resource {TerraformResource.AwsS3BucketObject} {TerraformResource.Quote($"file-{hash}")} {{")
                 .AppendLine($"  bucket = {TerraformResource.Quote(bucketName)}")
                 .AppendLine($"  key = {TerraformResource.Quote(key)}")
                 .AppendLine($"  source = {TerraformResource.Quote(absPath)}")
+                .AppendLine($"  content_type = {TerraformResource.Quote(mimeType)}")
                 .AppendLine("}")
                 .AppendLine()
                 .ToString();
@@ -47,12 +70,6 @@ namespace terraform_s3_bucket_folder
             File.WriteAllLines(writePath, lines);
 
             Console.WriteLine(File.ReadAllText(writePath));
-        }
-
-        static class TerraformResource
-        {
-            public static string Quote(string s) => '"' + s + '"';
-            public static readonly string AwsS3BucketObject = Quote("aws_s3_bucket_object");
         }
     }
 }
