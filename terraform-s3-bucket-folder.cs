@@ -32,7 +32,7 @@ namespace terraform_s3_bucket_folder
         {
             var bucketName = "${module.cdn.s3_bucket}";
             var readPath = $"{Environment.GetEnvironmentVariable("CODEBUILD_SRC_DIR")}{Path.DirectorySeparatorChar}{Environment.GetEnvironmentVariable("TF_VAR_build_path")}";
-            var bucketPath = "";
+
             Directory.CreateDirectory(readPath);
 
             var writePath = $"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}{bucketName}.tf";
@@ -53,7 +53,7 @@ namespace terraform_s3_bucket_folder
                 let fileName = Path.GetFileName(absPath)
                 let hash = (uint)absPath.GetHashCode()
                 let relPath = Path.GetRelativePath(readPath, absPath)
-                let key = $"{bucketPath}{Path.DirectorySeparatorChar}{relPath}"
+                let key = $"{Path.DirectorySeparatorChar}{relPath}"
                 let mimeType = mimeProvider.GetContentType(fileName)
                 select new StringBuilder()
                 .AppendLine($"  resource {TerraformResource.AwsS3BucketObject} {TerraformResource.Quote($"file-{hash}")} {{")
