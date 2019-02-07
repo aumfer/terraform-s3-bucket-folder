@@ -51,8 +51,8 @@ namespace terraform_s3_bucket_folder
             var bucketObjects =
                 from absPath in files
                 let fileName = Path.GetFileName(absPath)
-                let hash = (uint)absPath.GetHashCode()
                 let relPath = Path.GetRelativePath(readPath, absPath)
+                let hash = (uint)relPath.GetHashCode()
                 let key = $"{Path.DirectorySeparatorChar}{relPath}"
                 let mimeType = mimeProvider.GetContentType(fileName)
                 select new StringBuilder()
