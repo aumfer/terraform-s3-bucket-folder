@@ -33,7 +33,8 @@ namespace terraform_s3_bucket_folder
             var bucketName = args?.Skip(0).Take(1).FirstOrDefault();
             bucketName = bucketName ?? "${module.cdn.s3_bucket}";
             var readPath = args?.Skip(1).Take(1).FirstOrDefault();
-            readPath = readPath ?? $"{Environment.GetEnvironmentVariable("CODEBUILD_SRC_DIR")}{Path.DirectorySeparatorChar}{Environment.GetEnvironmentVariable("TF_VAR_build_path")}";
+            readPath = readPath ?? Environment.GetEnvironmentVariable("TF_VAR_build_path");
+            readPath = $"{Environment.GetEnvironmentVariable("CODEBUILD_SRC_DIR")}{Path.DirectorySeparatorChar}{readPath}";
 
             Directory.CreateDirectory(readPath);
 
@@ -57,12 +58,14 @@ namespace terraform_s3_bucket_folder
                 let hash = (uint)relPath.GetHashCode()
                 let key = $"{Path.DirectorySeparatorChar}{relPath}"
                 let mimeType = mimeProvider.GetContentType(fileName)
+                let etag = "${md5(file(" + TerraformResource.Quote(absPath) + "))}"
                 select new StringBuilder()
                 .AppendLine($"  resource {TerraformResource.AwsS3BucketObject} {TerraformResource.Quote($"file-{hash}")} {{")
                 .AppendLine($"  bucket = {TerraformResource.Quote(bucketName)}")
                 .AppendLine($"  key = {TerraformResource.Quote(key)}")
                 .AppendLine($"  source = {TerraformResource.Quote(absPath)}")
                 .AppendLine($"  content_type = {TerraformResource.Quote(mimeType)}")
+                .AppendLine($"  etag = {TerraformResource.Quote(etag)}")
                 .AppendLine("}")
                 .AppendLine()
                 .ToString();
