@@ -30,12 +30,14 @@ namespace terraform_s3_bucket_folder
     {
         static void Main(string[] args)
         {
-            var bucketName = "${module.cdn.s3_bucket}";
-            var readPath = $"{Environment.GetEnvironmentVariable("CODEBUILD_SRC_DIR")}{Path.DirectorySeparatorChar}{Environment.GetEnvironmentVariable("TF_VAR_build_path")}";
+            var bucketName = args?.Skip(0).Take(1).FirstOrDefault();
+            bucketName = bucketName ?? "${module.cdn.s3_bucket}";
+            var readPath = args?.Skip(1).Take(1).FirstOrDefault();
+            readPath = readPath ?? $"{Environment.GetEnvironmentVariable("CODEBUILD_SRC_DIR")}{Path.DirectorySeparatorChar}{Environment.GetEnvironmentVariable("TF_VAR_build_path")}";
 
             Directory.CreateDirectory(readPath);
 
-            var writePath = $"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}{bucketName}.tf";
+            var writePath = $"{Environment.CurrentDirectory}{Path.DirectorySeparatorChar}s3.{bucketName}.tf";
 
             Console.WriteLine($"bucketName {bucketName}");
             Console.WriteLine($"readPath {readPath}");
