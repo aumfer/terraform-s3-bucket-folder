@@ -56,7 +56,7 @@ namespace terraform_s3_bucket_folder
                 let fileName = Path.GetFileName(absPath)
                 let relPath = Path.GetRelativePath(readPath, absPath)
                 let hash = (uint)relPath.GetHashCode()
-                let key = $"{Path.DirectorySeparatorChar}{relPath}"
+                let key = $"{relPath}"
                 let mimeType = mimeProvider.GetContentType(fileName)
                 let etag = "${md5(file(" + TerraformResource.Quote(absPath) + "))}"
                 select new StringBuilder()
